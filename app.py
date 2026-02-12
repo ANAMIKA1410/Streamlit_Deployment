@@ -1,30 +1,41 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
+import datetime
+
+# Set up the page title and icon
+st.set_page_config(page_title="Personal Journal", page_icon="📝")
 
 # Title of the app
-st.title("Simple Streamlit App")
+st.title("Personal Journal")
+st.markdown("Keep track of your thoughts and daily activities. ✍️")
 
-# Sidebar for user input
-st.sidebar.header("User Input")
+# Load existing entries
+if 'entries' not in st.session_state:
+    st.session_state.entries = pd.DataFrame(columns=["Date", "Mood", "Entry"])
 
-def get_user_input():
-    num = st.sidebar.number_input("Select a number", value=10, min_value=0)
-    return num
+# Input fields for the journal entry
+date = st.date_input("Date", datetime.date.today())
+mood = st.selectbox("Mood", ["Happy", "Sad", "Productive", "Motivated", "Neutral"])
+entry = st.text_area("Journal Entry", "")
 
-# Get user input
-user_number = get_user_input()
+# Button to submit entry
+if st.button("Add Entry"):
+    if entry:
+        new_entry = pd.DataFrame([[date, mood, entry]], columns=["Date", "Mood", "Entry"])
+        st.session_state.entries = pd.concat([st.session_state.entries, new_entry], ignore_index=True)
+        st.success("Entry added!")
+    else:
+        st.warning("Please write an entry before submitting.")
 
-# Create a DataFrame based on user input
-data = pd.DataFrame({
-    'Numbers': np.arange(1, user_number + 1),
-    'Squares': np.square(np.arange(1, user_number + 1))
-})
+# Display past entries
+st.markdown("---")
+st.subheader("Past Entries")
+if not st.session_state.entries.empty:
+    st.write(st.session_state.entries)
+else:
+    st.write("No entries found.")
 
-# Display DataFrame in main area
-st.subheader("Data Preview")
-st.write(data)
-
-# Plotting the data
-st.subheader("Plot of Numbers and Squares")
-st.line_chart(data.set_index('Numbers'))
+# Provide options to clear entries (for the sake of development/testing)
+if st.button("Clear All Entries"):
+    st.session_state.entries = pd.DataFrame(columns=["Date", "Mood", "Entry"])
+    st.success("All entries cleared!")
